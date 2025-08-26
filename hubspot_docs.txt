@@ -1,0 +1,100 @@
+API Endpoints
+HubSpot API reference
+HubSpot API reference
+HubSpot’s developer platform is a core part of our mission to empower organizations to
+grow better
+. Our APIs are designed to enable teams of any shape or size to build robust integrations that help them customize and get the most value out of HubSpot.
+All HubSpot APIs are
+built using REST conventions
+and designed to have a predictable URL structure. They use many standard HTTP features, including methods (
+POST
+,
+GET
+,
+PUT
+,
+DELETE
+) and error response codes.
+All HubSpot API calls are made under
+https://api.hubapi.com
+and all responses return standard JSON.
+In this section of the docs site, you'll find lists of all available endpoints for a given API, along with interactive code blocks for building requests. For walkthroughs of basic usage for these APIs, check out the
+API guides
+.
+Setting up
+There are several ways to build integrations with HubSpot:
+To build an internal integration for an individual HubSpot account (e.g., you want to build an app that can access and edit only authorized parts of your account to share or integrate with other parts of your organization), create a
+private app
+.
+If you're looking to create a public app that can be installed across multiple HubSpot accounts, you should
+create a developer account
+. A developer account is where you create HubSpot apps, each authenticated with OAuth and provided with a configurable set of features and permissions. You can also use your developer account to
+create test accounts
+, monitor app status and performance, or publish apps to the HubSpot App Marketplace.
+Learn more about the
+different types of apps and how to build them
+.
+Client libraries
+Client libraries are designed to help you interact with the HubSpot APIs with less friction. They are written in several different languages and help bridge the gap between your app and HubSpot’s APIs. Each client library provides functions to access HubSpot's APIs so you don't need to know the exact URL and HTTP method to use for each API call, leaving you more time to focus on building your app.
+Language
+Package Link
+Source Code
+Node.Js
+npm install @hubspot/api-client
+hubspot-api-nodejs
+PHP
+composer require hubspot/api-client
+hubspot-api-php
+Ruby
+gem install hubspot-api-client
+hubspot-api-ruby
+Python
+pip install hubspot-api-client
+hubspot-api-python
+Using the documentation
+Each set of API endpoints includes reference documentation that details the available parameters and provides example requests in multiple languages, and a guide that walks you through the functionality of each endpoint. A link to the corresponding guide for an API will be included at the top of each page for easy navigation.
+In the reference documentation for a given API, several options are available to help you test out a given endpoint:
+Above the
+Request
+code block for each endpoint, you can click
+Test call
+to make test calls directly from the page.
+You can paste in an OAuth access token if you're building a
+public app
+, or a private app access token if you're building a
+private app
+.
+Click
+Send request
+to make a call to your app with any test parameters that you populate on the left side of the page.
+At the top of API reference pages, a
+Run in Postman
+button is displayed when the API is available in
+HubSpot's Postman collection
+. Learn more about
+using Postman
+to make API requests to HubSpot.
+When you're ready to implement an API in your integration, you can consult the documentation about general app development, including
+authentication
+and
+listing apps on the App Marketplace
+. You'll also find guides for
+building UI extensions (BETA)
+and working with the
+developer projects framework (BETA)
+.
+Building on HubSpot's CMS
+While the API reference documentation includes information about using HubSpot's CMS APIs, such as the
+pages API
+, you'll find the full set of CMS developer documentation at
+https://developers.hubspot.com/docs/cms
+. This includes guides that walk through building various CMS assets as well as reference documentation for HubL.
+Support and community resources
+Get your questions answered, make connections, and share your insights by joining HubSpot’s growing
+developer community forums
+and
+Slack community
+. These forums are a great place to make your voice heard — community feedback is incredibly important to us and our ongoing efforts to improve HubSpot’s developer experience.
+You can also stay up to date on new features, announcements, and important changes by subscribing to the
+Changelog
+blog.
