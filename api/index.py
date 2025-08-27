@@ -1,6 +1,6 @@
 import os
 import time
-from fastapi import FastAPI, HTTPException, APIRouter
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, HttpUrl
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
@@ -108,13 +108,11 @@ app.add_middleware(
 class URLItem(BaseModel):
     url: HttpUrl
 
-api_router = APIRouter(prefix="/api")
-
-@api_router.get("/")
+@app.get("/api")
 def read_root():
     return {"message": "API de Ingestão de Conhecimento está funcionando!"}
 
-@api_router.post("/add-knowledge")
+@app.post("/api/add-knowledge")
 async def add_knowledge(item: URLItem):
     try:
         scraped_text = scrape_url(str(item.url))
@@ -130,5 +128,3 @@ async def add_knowledge(item: URLItem):
         return {"status": "success", "message": f"Conhecimento da URL {item.url} adicionado com sucesso."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ocorreu um erro interno: {str(e)}")
-    
-app.include_router(api_router)
