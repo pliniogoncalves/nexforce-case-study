@@ -1,8 +1,8 @@
 beautifulsoup4
-langchain
-qdrant-client
 python-dotenv
 google-generativeai
 fastapi
 uvicorn[standard]
 httpx
+qdrant-client
+langchain-text-splitters

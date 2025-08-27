@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 from bs4 import BeautifulSoup
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import google.generativeai as genai
 from qdrant_client import QdrantClient, models
 
@@ -47,10 +47,10 @@ def scrape_url(url: str) -> str:
             
     except httpx.RequestError as exc:
         print(f"Ocorreu um erro ao chamar a API do Browserless: {exc}")
-        return ""
+        raise HTTPException(status_code=500, detail=str(exc))
     except httpx.HTTPStatusError as exc:
         print(f"A API do Browserless retornou um erro: {exc.response.status_code} - {exc.response.text}")
-        return ""
+        raise HTTPException(status_code=500, detail=str(exc))
 
 def chunk_text(text: str) -> list[str]:
     print("Iniciando a fragmentação do texto...")
