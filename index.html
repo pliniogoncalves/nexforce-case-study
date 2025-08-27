@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agente de IA - HubSpot API</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f9; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+        h1, h2 { color: #FF7A59; }
+        .container { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input[type="text"], input[type="url"] { width: calc(100% - 100px); padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 15px; border: none; background-color: #00a4bd; color: white; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+        button:hover { background-color: #007a8c; }
+        #ingestionStatus, #answerArea { margin-top: 15px; padding: 15px; background-color: #eef7f9; border-left: 5px solid #00a4bd; min-height: 20px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+    <h1>Agente de IA - Especialista na API do HubSpot</h1>
+
+    <div class="container" id="ingestion">
+        <h2>Adicionar Novo Conhecimento</h2>
+        <p>Cole a URL de uma página da documentação do HubSpot para ensinar o agente.</p>
+        <input type="url" id="urlInput" placeholder="https://developers.hubspot.com/docs/api/...">
+        <button onclick="addKnowledge()">Ensinar Agente</button>
+        <div id="ingestionStatus">Aguardando URL...</div>
+    </div>
+
+    <div class="container" id="qa">
+        <h2>Fazer uma Pergunta</h2>
+        <p>Pergunte algo sobre o conhecimento que o agente já possui.</p>
+        <input type="text" id="questionInput" placeholder="Como eu crio um private app?">
+        <button onclick="askQuestion()">Perguntar</button>
+        <div id="answerArea">A resposta aparecerá aqui...</div>
+    </div>
+
+    <script>
+        async function addKnowledge() {
+            const urlInput = document.getElementById('urlInput');
+            const statusDiv = document.getElementById('ingestionStatus');
+            const url = urlInput.value;
+
+            if (!url) {
+                statusDiv.innerText = "Por favor, insira uma URL.";
+                return;
+            }
+
+            statusDiv.innerText = "Processando... Isso pode levar até um minuto.";
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/add-knowledge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.detail || 'Ocorreu um erro.');
+                }
+
+                statusDiv.innerText = result.message;
+                urlInput.value = "";
+            } catch (error) {
+                statusDiv.innerText = "Erro: " + error.message;
+            }
+        }
+
+        async function askQuestion() {
+            const questionInput = document.getElementById('questionInput');
+            const answerDiv = document.getElementById('answerArea');
+            const question = questionInput.value;
+
+            if (!question) {
+                answerDiv.innerText = "Por favor, faça uma pergunta.";
+                return;
+            }
+
+            const n8nWebhookUrl = 'https://pliniogoncalves.app.n8n.cloud/webhook/f5c0cb34-288f-46b9-9920-2c39f43dd6e6';
+
+            answerDiv.innerText = "Pensando...";
+
+            try {
+                const finalUrl = `${n8nWebhookUrl}?question=${encodeURIComponent(question)}`;
+
+                const response = await fetch(finalUrl);
+
+                if (!response.ok) {
+                    throw new Error(`Erro na rede: ${response.statusText}`);
+                }
+
+                const answer = await response.text();
+                answerDiv.innerText = answer;
+            } catch (error) {
+                answerDiv.innerText = "Erro ao buscar resposta: " + error.message;
+            }
+        }
+    </script>
+
+</body>
+</html>
