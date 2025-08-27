@@ -1,9 +1,8 @@
 beautifulsoup4
-selenium
-webdriver-manager
 langchain
 qdrant-client
 python-dotenv
 google-generativeai
 fastapi
 uvicorn[standard]
+httpx

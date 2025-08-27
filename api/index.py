@@ -4,9 +4,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, HttpUrl
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
+import httpx
 from bs4 import BeautifulSoup
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import google.generativeai as genai
@@ -16,17 +14,13 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 def scrape_url(url: str) -> str:
-    print(f"Iniciando scraping para: {url}")
-    service = ChromeService(ChromeDriverManager().install())
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--log-level=3')
-    driver = webdriver.Chrome(service=service, options=options)
-    
+    """Coleta o conteúdo de texto de uma URL usando httpx (leve)."""
+    print(f"Iniciando scraping leve para: {url}")
     try:
-        driver.get(url)
-        time.sleep(5)
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        response = httpx.get(url, follow_redirects=True, timeout=30)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.text, 'html.parser')
         content_article = soup.find('article', attrs={'data-test-id': 'docs-content'})
         
         if content_article:
@@ -35,8 +29,9 @@ def scrape_url(url: str) -> str:
         else:
             print("AVISO: Artigo de conteúdo principal não encontrado.")
             return ""
-    finally:
-        driver.quit()
+    except httpx.RequestError as exc:
+        print(f"Ocorreu um erro na requisição para {exc.request.url!r}.")
+        return ""
 
 def chunk_text(text: str) -> list[str]:
     print("Iniciando a fragmentação do texto...")
