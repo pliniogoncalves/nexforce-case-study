@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
-    ? 'http://127.0.0.1:8000'
-    : '';
+    ? 'http://127.0.0.1:8000/api'
+    : '/api';
     
 async function addKnowledge() {
     const urlInput = document.getElementById('knowledgeUrl');
@@ -23,7 +23,7 @@ async function addKnowledge() {
     statusDiv.innerText = "Processando... Isso pode levar até um minuto.";
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/add-knowledge`, {
+        const response = await fetch(`${API_BASE_URL}/add-knowledge`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: url })
