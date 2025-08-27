@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.pyc
+api/__pycache__/
 
 # Environment
 .env
