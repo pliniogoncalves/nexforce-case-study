@@ -1,0 +1,248 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "f5c0cb34-288f-46b9-9920-2c39f43dd6e6",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "75310032-e3af-4cb8-9d6a-22021b48f3fa",
+      "name": "Webhook",
+      "webhookId": "f5c0cb34-288f-46b9-9920-2c39f43dd6e6"
+    },
+    {
+      "parameters": {
+        "jsCode": "const question = items[0].json.query.question;\n\nif (!question || question.trim() === \"\") {\n  throw new Error(\"A pergunta (question) não foi fornecida ou está vazia na URL.\");\n}\n\nconst api_body_object = {\n  \"model\": \"models/text-embedding-004\",\n  \"content\": {\n    \"parts\": [\n      {\n        \"text\": question\n      }\n    ]\n  }\n};\n\nconst api_body_as_string = JSON.stringify(api_body_object);\n\nreturn [{ json: { body_para_api: api_body_as_string } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "ab264c9f-3176-4f14-b4b6-c35053b8177c",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body_para_api }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "a5f2a9a2-8fb0-4384-a2dd-8020ddbff65c",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RxsxbvfXbB8uT7wH",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const originalQuestion = $('Webhook').item.json.query.question;\n\nconst searchResults = items[0].json.result;\n\nlet context = \"\";\n\nif (Array.isArray(searchResults) && searchResults.length > 0) {\n  for (const point of searchResults) {\n    if (point.payload && point.payload.text) {\n      context += point.payload.text + \"\\n---\\n\";\n    }\n  }\n}\n\nconst prompt = `\nVocê é um assistente especialista na API da HubSpot. Sua tarefa é responder à pergunta do usuário baseando-se SOMENTE no contexto fornecido. Se o contexto estiver vazio, diga que você não tem informação sobre aquele assunto.\n\n**Contexto:**\n${context}\n\n**Pergunta:**\n${originalQuestion}\n\n**Resposta:**\n`;\n\nreturn [{\n  json: {\n    finalPrompt: prompt\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        0
+      ],
+      "id": "c112d436-7692-495f-a8a6-b16af1459651",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ \"contents\": [ { \"parts\": [ { \"text\": $json.finalPrompt } ] } ] }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        0
+      ],
+      "id": "33aa3dac-050e-4922-a6a9-e076f9bbab04",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RxsxbvfXbB8uT7wH",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.candidates[0].content.parts[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1488,
+        0
+      ],
+      "id": "52ae5d3a-8d11-4759-8ebb-ca224cba9bc7",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const queryVector = items[0].json.embedding.values;\n\nconst qdrantBody = {\n  \"vector\": queryVector,\n  \"limit\": 5,\n  \"with_payload\": true,\n  \"score_threshold\": 0.5\n};\n\nreturn [{\n  json: {\n    qdrant_body: qdrantBody\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "7129ed34-2d0f-48b0-bef5-9b449614ce18",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a76a1e2c-ca24-4f61-9569-7bdcbf6fcffe.us-west-2-0.aws.cloud.qdrant.io:6333/collections/hubspot_docs/points/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.of4Y5WfJuCkbp6GOYm92Tmif35Kk9DmjUVHKNf_3xss"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.qdrant_body) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        848,
+        0
+      ],
+      "id": "dc0b7d22-1ed3-4cc5-97a4-84fce36ffee6",
+      "name": "HTTP Request2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f1dadebb-abbf-4266-b04c-509fa923de9d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "86f63042eac4d0fc2bb7cc9ad49c4dd11de5dc785a4b72b5e86c63cb538065a0"
+  },
+  "id": "8W9EwGngFoOYxCr0",
+  "tags": []
+}
