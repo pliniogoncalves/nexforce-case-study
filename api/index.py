@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 from bs4 import BeautifulSoup
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 import google.generativeai as genai
 from qdrant_client import QdrantClient, models
 
@@ -15,28 +14,15 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 def scrape_url(url: str) -> str:
     print(f"Iniciando scraping avançado com Browserless /scrape para: {url}")
-    
     browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
     if not browserless_api_key:
         raise HTTPException(status_code=500, detail="Chave da API do Browserless não configurada.")
-
     api_url = f"https://production-sfo.browserless.io/scrape?token={browserless_api_key}"
-    
-    payload = {
-        "url": url,
-        "elements": [
-            {
-                "selector": "article[data-test-id='docs-content']"
-            }
-        ]
-    }
-    
+    payload = {"url": url, "elements": [{"selector": "article[data-test-id='docs-content']"}]}
     try:
         response = httpx.post(api_url, json=payload, timeout=90)
         response.raise_for_status()
-        
         data = response.json()
-        
         if data.get('data') and data['data'][0].get('results'):
             full_text = "\n".join([result['text'] for result in data['data'][0]['results']])
             print("Conteúdo extraído com sucesso via Browserless /scrape.")
@@ -44,26 +30,32 @@ def scrape_url(url: str) -> str:
         else:
             print("AVISO: O seletor não retornou resultados no endpoint /scrape.")
             return ""
-            
-    except httpx.RequestError as exc:
+    except Exception as exc:
         print(f"Ocorreu um erro ao chamar a API do Browserless: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
-    except httpx.HTTPStatusError as exc:
-        print(f"A API do Browserless retornou um erro: {exc.response.status_code} - {exc.response.text}")
         raise HTTPException(status_code=500, detail=str(exc))
 
 def chunk_text(text: str) -> list[str]:
-    print("Iniciando a fragmentação do texto...")
+    print("Iniciando a fragmentação do texto com a função nativa...")
     if not text:
         return []
     
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
-        length_function=len
-    )
+    chunk_size = 1000
+    chunk_overlap = 200
     
-    chunks = text_splitter.split_text(text)
+    paragraphs = text.split('\n')
+    chunks = []
+    current_chunk = ""
+
+    for p in paragraphs:
+        if len(current_chunk) + len(p) + 1 < chunk_size:
+            current_chunk += p + "\n"
+        else:
+            chunks.append(current_chunk)
+            current_chunk = current_chunk[-chunk_overlap:] + p + "\n"
+    
+    if current_chunk:
+        chunks.append(current_chunk)
+        
     print(f"Texto dividido em {len(chunks)} chunks.")
     return chunks
 
