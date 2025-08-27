@@ -2,10 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const teachButton = document.getElementById('teachAgentBtn');
     const askButton = document.getElementById('askQuestionBtn');
 
-    teachButton.addEventListener('click', addKnowledge);
-    askButton.addEventListener('click', askQuestion);
+    if(teachButton) teachButton.addEventListener('click', addKnowledge);
+    if(askButton) askButton.addEventListener('click', askQuestion);
 });
 
+const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+    ? 'http://127.0.0.1:8000'
+    : '';
+    
 async function addKnowledge() {
     const urlInput = document.getElementById('knowledgeUrl');
     const statusDiv = document.getElementById('teachStatus');
@@ -19,7 +23,7 @@ async function addKnowledge() {
     statusDiv.innerText = "Processando... Isso pode levar até um minuto.";
 
     try {
-        const response = await fetch('/api/add-knowledge', {
+        const response = await fetch(`${API_BASE_URL}/api/add-knowledge`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: url })

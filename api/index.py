@@ -14,23 +14,42 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 def scrape_url(url: str) -> str:
-    """Coleta o conteúdo de texto de uma URL usando httpx (leve)."""
-    print(f"Iniciando scraping leve para: {url}")
-    try:
-        response = httpx.get(url, follow_redirects=True, timeout=30)
-        response.raise_for_status()
+    print(f"Iniciando scraping avançado com Browserless /scrape para: {url}")
+    
+    browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
+    if not browserless_api_key:
+        raise HTTPException(status_code=500, detail="Chave da API do Browserless não configurada.")
 
-        soup = BeautifulSoup(response.text, 'html.parser')
-        content_article = soup.find('article', attrs={'data-test-id': 'docs-content'})
+    api_url = f"https://production-sfo.browserless.io/scrape?token={browserless_api_key}"
+    
+    payload = {
+        "url": url,
+        "elements": [
+            {
+                "selector": "article[data-test-id='docs-content']"
+            }
+        ]
+    }
+    
+    try:
+        response = httpx.post(api_url, json=payload, timeout=90)
+        response.raise_for_status()
         
-        if content_article:
-            print("Conteúdo extraído com sucesso.")
-            return content_article.get_text(separator='\n', strip=True)
+        data = response.json()
+        
+        if data.get('data') and data['data'][0].get('results'):
+            full_text = "\n".join([result['text'] for result in data['data'][0]['results']])
+            print("Conteúdo extraído com sucesso via Browserless /scrape.")
+            return full_text
         else:
-            print("AVISO: Artigo de conteúdo principal não encontrado.")
+            print("AVISO: O seletor não retornou resultados no endpoint /scrape.")
             return ""
+            
     except httpx.RequestError as exc:
-        print(f"Ocorreu um erro na requisição para {exc.request.url!r}.")
+        print(f"Ocorreu um erro ao chamar a API do Browserless: {exc}")
+        return ""
+    except httpx.HTTPStatusError as exc:
+        print(f"A API do Browserless retornou um erro: {exc.response.status_code} - {exc.response.text}")
         return ""
 
 def chunk_text(text: str) -> list[str]:
